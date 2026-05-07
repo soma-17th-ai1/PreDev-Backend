@@ -118,7 +118,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "embedding",
-            pgvector.sqlalchemy.Vector(1024),
+            pgvector.sqlalchemy.Vector(4096),
             nullable=False,
         ),
     )
@@ -126,11 +126,6 @@ def upgrade() -> None:
         "ix_message_embeddings_session",
         "message_embeddings",
         ["session_id"],
-    )
-    op.execute(
-        "CREATE INDEX ix_message_embeddings_cosine "
-        "ON message_embeddings USING ivfflat (embedding vector_cosine_ops) "
-        "WITH (lists = 100);"
     )
 
 

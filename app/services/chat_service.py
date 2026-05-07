@@ -78,6 +78,7 @@ async def _embed_silently(
             db, message_id=message_id, session_id=session_id, content=content
         )
     except Exception as exc:  # noqa: BLE001
+        await db.rollback()
         log.warning("embedding skipped: %s", exc)
 
 
