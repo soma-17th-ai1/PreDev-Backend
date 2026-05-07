@@ -117,7 +117,7 @@ class MessageEmbedding(Base):
         ForeignKey("sessions.id", ondelete="CASCADE"),
         nullable=False,
     )
-    embedding: Mapped[list[float]] = mapped_column(Vector(1024), nullable=False)
+    embedding: Mapped[list[float]] = mapped_column(Vector(4096), nullable=False)
 
     message: Mapped[Message] = relationship(back_populates="embedding")
 

@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     embedding_query_model: str = Field(
         default="embedding-query", alias="EMBEDDING_QUERY_MODEL"
     )
-    embedding_dim: int = Field(default=1024, alias="EMBEDDING_DIM")
+    embedding_dim: int = Field(default=4096, alias="EMBEDDING_DIM")
 
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
