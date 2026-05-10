@@ -13,7 +13,7 @@ SCENE_ORDER: list[tuple[SceneId, int]] = [
     (SceneId.SCENE_FIRST_MEET, 0),
     (SceneId.SCENE_PROJECT_PLAN_EVALUATION, 5),
     (SceneId.SCENE_LAUNCH_CEREMONY, 8),
-    (SceneId.SCENE_MID_EVALUATION, 12),
+    (SceneId.SCENE_MID_EVALUATION, 11),
     (SceneId.SCENE_DEEP_DEV, 16),
     (SceneId.SCENE_FINAL_EVALUATION, 19),
     (SceneId.SCENE_GRADUATION_BUSAN, 22),
