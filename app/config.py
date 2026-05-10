@@ -31,7 +31,7 @@ class Settings(BaseSettings):
         alias="ALLOWED_ORIGINS",
     )
 
-    chat_limit_default: int = Field(default=50, alias="CHAT_LIMIT_DEFAULT")
+    chat_limit_default: int = Field(default=25, alias="CHAT_LIMIT_DEFAULT")
     llm_model: str = Field(default="solar-pro3", alias="LLM_MODEL")
     embedding_model: str = Field(default="embedding-passage", alias="EMBEDDING_MODEL")
     embedding_query_model: str = Field(
