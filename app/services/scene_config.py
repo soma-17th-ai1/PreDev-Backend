@@ -10,13 +10,13 @@ from app.schemas.game import IntroDialogueCharacter, IntroDialogueNarration, Sce
 # §1.6.1 — chat_count threshold to ENTER each story scene.
 SCENE_ORDER: list[tuple[SceneId, int]] = [
     (SceneId.SCENE_INTRO, 0),
-    (SceneId.SCENE_FIRST_MEET, 1),
+    (SceneId.SCENE_FIRST_MEET, 0),
     (SceneId.SCENE_PROJECT_PLAN_EVALUATION, 5),
-    (SceneId.SCENE_LAUNCH_CEREMONY, 12),
-    (SceneId.SCENE_MID_EVALUATION, 17),
-    (SceneId.SCENE_DEEP_DEV, 28),
-    (SceneId.SCENE_FINAL_EVALUATION, 37),
-    (SceneId.SCENE_GRADUATION_BUSAN, 45),
+    (SceneId.SCENE_LAUNCH_CEREMONY, 8),
+    (SceneId.SCENE_MID_EVALUATION, 12),
+    (SceneId.SCENE_DEEP_DEV, 16),
+    (SceneId.SCENE_FINAL_EVALUATION, 19),
+    (SceneId.SCENE_GRADUATION_BUSAN, 22),
 ]
 
 SCENE_THRESHOLDS: dict[SceneId, int] = dict(SCENE_ORDER)

@@ -271,8 +271,11 @@ async def stream_chat(session: Session, user_text: str) -> AsyncIterator[dict[st
                     SseEventTriggerPayload(event_id=triggers.event_id, blocking=True),
                 )
 
-            # 8) scene_transition (if any)
-            if triggers.next_scene_id is not None:
+            # 8) scene_transition (if any) — INTRO→FIRST_MEET is handled by the frontend
+            if triggers.next_scene_id is not None and not (
+                prev_scene == SceneId.SCENE_INTRO
+                and triggers.next_scene_id == SceneId.SCENE_FIRST_MEET
+            ):
                 yield to_event(
                     "scene_transition",
                     SseSceneTransitionPayload(next_scene_id=triggers.next_scene_id),
