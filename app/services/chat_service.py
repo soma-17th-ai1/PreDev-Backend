@@ -13,6 +13,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
@@ -82,6 +83,28 @@ async def _embed_silently(
         log.warning("embedding skipped: %s", exc)
 
 
+async def _load_conversation_history(db: AsyncSession, *, session_id) -> list[dict]:
+    """Load all prior free-chat messages in chronological order."""
+
+    stmt = (
+        select(Message)
+        .where(Message.session_id == session_id)
+        .order_by(Message.created_at.asc())
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "role": msg.role,
+            "content": msg.content,
+            "emotion": msg.emotion,
+            "scene_id": msg.scene_id,
+            "affinity_after": msg.affinity_after,
+            "created_at": msg.created_at.isoformat() if msg.created_at else None,
+        }
+        for msg in rows
+    ]
+
+
 def _semantic_chunks(buffer: str) -> tuple[str, str]:
     """Return (flushable_chunk, remaining_buffer).
 
@@ -113,6 +136,10 @@ async def stream_chat(session: Session, user_text: str) -> AsyncIterator[dict[st
             prev_max = session.max_affinity
             prev_min = session.min_affinity
 
+            conversation_history = await _load_conversation_history(
+                db, session_id=session_id
+            )
+
             user_msg = await _persist_message(
                 db,
                 session_id=session_id,
@@ -134,16 +161,12 @@ async def stream_chat(session: Session, user_text: str) -> AsyncIterator[dict[st
                 chat_limit=session.chat_limit,
             )
 
-            retrieved = await vector_store.search_similar(
-                db, session_id=session_id, query_text=user_text, k=4
-            )
-
             graph = get_graph()
             graph_state = await graph.ainvoke(
                 {
                     "user_message": user_text,
                     "snapshot": snapshot,
-                    "retrieved_messages": retrieved,
+                    "conversation_history": conversation_history,
                 }
             )
             is_injection = bool(graph_state.get("is_injection", False))
@@ -167,7 +190,7 @@ async def stream_chat(session: Session, user_text: str) -> AsyncIterator[dict[st
             # 2) delta×N — streamed reply.
             messages = build_response_messages(
                 snapshot=snapshot,
-                retrieved_messages=retrieved,
+                conversation_history=conversation_history,
                 user_message=user_text,
                 new_emotion=new_emotion,
                 is_injection=is_injection,
@@ -175,7 +198,7 @@ async def stream_chat(session: Session, user_text: str) -> AsyncIterator[dict[st
             full_response_parts: list[str] = []
             buffer = ""
             try:
-                async for token in chat_stream(messages, temperature=0.7, max_tokens=512):
+                async for token in chat_stream(messages, temperature=0.65, max_tokens=180):
                     full_response_parts.append(token)
                     buffer += token
                     flush, buffer = _semantic_chunks(buffer)
@@ -194,8 +217,6 @@ async def stream_chat(session: Session, user_text: str) -> AsyncIterator[dict[st
             assistant_text = "".join(full_response_parts).strip()
 
             # 3) Evaluate triggers via rule engine.
-            from sqlalchemy import select
-
             fired_stmt = select(TriggeredEvent.event_id).where(
                 TriggeredEvent.session_id == session_id
             )
