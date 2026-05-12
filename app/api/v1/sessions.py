@@ -94,6 +94,15 @@ async def post_session(
     )
 
 
+@router.delete("/me", status_code=204)
+async def delete_session(
+    db: AsyncSession = Depends(get_db),
+    session: Session = Depends(require_session),
+):
+    await db.delete(session)
+    await db.commit()
+
+
 @router.post("/me/start")
 async def post_session_start(
     body: SessionStartRequest,
