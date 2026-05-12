@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     embedding_dim: int = Field(default=4096, alias="EMBEDDING_DIM")
 
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
+    dev_mode: bool = Field(default=False, alias="DEV_MODE")
 
     @property
     def origins_list(self) -> list[str]:

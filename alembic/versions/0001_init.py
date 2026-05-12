@@ -37,7 +37,6 @@ def upgrade() -> None:
         sa.Column("is_ended", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("max_affinity", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("min_affinity", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("ending_narrative", sa.Text(), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
