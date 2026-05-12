@@ -63,9 +63,13 @@ async def reset_session(db: AsyncSession, session: Session) -> Session:
 
 
 async def start_session(db: AsyncSession, session: Session, player_name: str) -> Session:
+    was_started = session.is_started
     session.player_name = player_name
     session.is_started = True
-    session.current_scene_id = SceneId.SCENE_INTRO.value
+    if not was_started or session.current_scene_id == SceneId.SCENE_INTRO.value:
+        # The frontend plays the static intro and enters SCENE_FIRST_MEET before
+        # the first LLM chat. Keep backend context aligned without changing FE.
+        session.current_scene_id = SceneId.SCENE_FIRST_MEET.value
     session.last_active_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(session)
