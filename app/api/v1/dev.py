@@ -37,6 +37,8 @@ async def force_ending(
 ):
     scene = _ending_scene(body.affinity)
     session.affinity = body.affinity
+    session.max_affinity = max(session.max_affinity, body.affinity)
+    session.min_affinity = min(session.min_affinity, body.affinity)
     session.current_scene_id = scene.value
     session.is_ended = True
     session.is_started = True
