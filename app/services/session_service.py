@@ -55,7 +55,6 @@ async def reset_session(db: AsyncSession, session: Session) -> Session:
     session.is_ended = False
     session.max_affinity = 0
     session.min_affinity = 0
-    session.ending_narrative = None
     session.last_active_at = datetime.now(timezone.utc)
 
     await db.commit()

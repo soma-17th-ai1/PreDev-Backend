@@ -64,7 +64,6 @@ class EndingStats(BaseModel):
 class EndingPayload(BaseModel):
     ending_id: EndingId
     title: str
-    narrative: str
     final_affinity: int
     stats: EndingStats
 
