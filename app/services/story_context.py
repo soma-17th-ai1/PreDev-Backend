@@ -33,14 +33,19 @@ STORY_SCENE_SEQUENCE: tuple[SceneId, ...] = (
 
 
 GLOBAL_INTRO_LINES: tuple[FixedLine, ...] = (
-    ("NARRATION", "4월 13일 월요일, Software Maestro 센터에 처음 가는 날이다."),
+    ("NARRATION", "4월 13일, 월요일. 화창한 아침."),
     ("PLAYER", "오늘은 처음 센터에 가는 날이니까 빨리 준비해야지."),
-    ("NARRATION", "지하철을 타고 포스타워에 도착해 7층 센터로 향한다."),
+    ("NARRATION", "지하철을 타고 포스타워에 도착해 7층 센터로 향했다."),
     ("PLAYER", "오, 여기가 소마 건물이구나. 7층이었지, 아마?"),
-    ("NARRATION", "워크숍 때 혈당 스파이크로 잠들어 네트워킹을 망친 일을 떠올린다."),
+    ("NARRATION", "운 좋게 소프트웨어 마에스트로에 합격한 뒤, 처음으로 센터에 들어왔다."),
+    ("PLAYER", "센터 오픈 첫날이라 그런지 사람이 꽤 많네…! 오늘은 꼭 팀원을 구해야지!"),
     ("PLAYER", "워크숍 때 봤던 그녀도 있을까…? 꼭 다시 만나보고 싶어."),
-    ("NARRATION", "S1 룸에 들어서자 창가 자리에 신비로운 분위기의 소녀가 앉아 있다."),
-    ("NARRATION", "그녀의 노트북에는 검은 터미널과 GDB 프롬프트가 떠 있고, 옆에는 식은 아메리카노가 있다."),
+    ("NARRATION", "워크숍 때 혈당 스파이크로 잠들어 네트워킹을 망친 일을 떠올렸다."),
+    ("PLAYER", "앞으로 간식은 자제하자…"),
+    ("NARRATION", "S1 룸에 들어서자 창가 자리에 신비로운 분위기의 소녀가 앉아 있었다."),
+    ("PLAYER", "어..? 어…???? 아닛, 저 사람은…?"),
+    ("NARRATION", "천사의 날개 같은 흰 머리, 파란 눈, 신비로운 분위기가 눈에 들어왔다."),
+    ("NARRATION", "그녀의 노트북 화면엔 검은 터미널 위로 GDB 프롬프트가 깜빡이고, 옆에는 식은 아메리카노가 놓여 있었다."),
 )
 
 
@@ -50,13 +55,13 @@ SCENE_FIXED_SCRIPTS: dict[SceneId, SceneFixedScript] = {
         relationship_note="서로 아직 어색하다. 플레이어는 세라에게 강한 첫인상을 느끼고 조심스럽게 말을 건다.",
         prologue=(
             ("PLAYER", "그때 워크숍 때 봤던 사람이잖아…? 다시 봐도 정말 눈에 띄네."),
-            ("PLAYER", "관심사가 나랑 비슷한 것 같았어. 지금이라도 말을 걸어봐야겠다…!"),
+            ("PLAYER", "그때 잠깐 이야기 듣다 보니 관심사가 나랑 비슷한 것 같았어. 지금이라도 한 번 말을 걸어봐야겠다…!"),
             ("NARRATION", "플레이어가 그녀 앞으로 조심스럽게 다가간다."),
             ("PLAYER", "저… 저기요…!"),
             ("SERA", "…?"),
             ("PLAYER", "그… 저… 혹시… 저, 기억하시나요…?"),
             ("SERA", "응? 아니아니, 누구신데요?"),
-            ("NARRATION", "세라가 잠시 바라보다가 무언가 떠오른 듯 눈이 살짝 커진다."),
+            ("NARRATION", "그녀가 잠시 플레이어를 바라보더니, 뭔가 떠오른 듯 눈이 살짝 커졌다."),
             ("SERA", "아…! 그때 워크숍 18번 테이블에서 초코파이 드시던 분이세요?"),
             ("PLAYER", "네…! 기억해주셨군요!! 저, {{player.name}}이에요."),
             ("SERA", "오, 그분이셨구나? 안녕하세요. 저는 이세라라고 해요."),
@@ -160,6 +165,24 @@ def _fill_player_name(text: str, player_name: str | None) -> str:
     return text.replace("{{player.name}}", player_name or "플레이어")
 
 
+def _line_to_chat_message(role: str, text: str, player_name: str | None) -> dict[str, str]:
+    filled = _fill_player_name(text, player_name)
+    if role == "SERA":
+        return {"role": "assistant", "content": filled}
+    if role == "PLAYER":
+        return {"role": "user", "content": filled}
+    return {"role": "user", "content": f"[지문] {filled}"}
+
+
+def _lines_to_chat_messages(
+    lines: tuple[FixedLine, ...], player_name: str | None
+) -> list[dict[str, str]]:
+    return [
+        _line_to_chat_message(role, text, player_name)
+        for role, text in lines
+    ]
+
+
 def _format_lines(lines: tuple[FixedLine, ...], player_name: str | None) -> list[str]:
     return [
         f"- {role}: {_fill_player_name(text, player_name)}"
@@ -214,6 +237,74 @@ def build_fixed_story_context(scene_id: SceneId, player_name: str | None) -> str
             )
 
     return "\n".join(lines)
+
+
+def build_response_story_context(scene_id: SceneId, player_name: str | None) -> str:
+    """Compact Korean story/scene context for Sera's response system prompt."""
+
+    current_idx = _scene_index(scene_id)
+    current_script = SCENE_FIXED_SCRIPTS.get(scene_id)
+    lines: list[str] = [
+        "[세라의 기억]",
+        "- 플레이어는 Software Maestro 센터 첫날 S1 룸에서 너를 처음 제대로 마주했다.",
+        "- 플레이어는 워크숍 18번 테이블에서 초코파이를 많이 먹었던 사람으로 기억된다.",
+    ]
+
+    previous_scene_lines: list[str] = []
+    for index, fixed_scene_id in enumerate(STORY_SCENE_SEQUENCE):
+        if index >= current_idx:
+            break
+        script = SCENE_FIXED_SCRIPTS[fixed_scene_id]
+        title = SCENE_TITLES.get(fixed_scene_id, fixed_scene_id.value)
+        previous_scene_lines.append(
+            f"- {title}: {script.setting} {script.relationship_note}"
+        )
+        if script.epilogue:
+            previous_scene_lines.append(
+                f"- 장면 마무리: {_line_text(script.epilogue, player_name)}"
+            )
+
+    if previous_scene_lines:
+        lines.extend(["", "[이전 장면 기억]", *previous_scene_lines])
+
+    if current_script is not None:
+        title = SCENE_TITLES.get(scene_id, scene_id.value)
+        lines.extend(
+            [
+                "",
+                "[현재 장면]",
+                f"- 제목: {title}",
+                f"- 상황: {current_script.setting}",
+                f"- 관계 온도: {current_script.relationship_note}",
+            ]
+        )
+
+    return "\n".join(lines)
+
+
+def build_fixed_dialogue_messages(
+    scene_id: SceneId, player_name: str | None
+) -> list[dict[str, str]]:
+    """Return already-played frontend VN lines as chat turns.
+
+    PLAYER lines become user messages, SERA lines become assistant messages,
+    and narration becomes user messages prefixed with [지문]. For previous
+    scenes, both prologue and epilogue have already played. For the current
+    scene, only the prologue has played before the free-chat loop.
+    """
+
+    current_idx = _scene_index(scene_id)
+    messages = _lines_to_chat_messages(GLOBAL_INTRO_LINES, player_name)
+
+    for index, fixed_scene_id in enumerate(STORY_SCENE_SEQUENCE):
+        if index > current_idx:
+            break
+        script = SCENE_FIXED_SCRIPTS[fixed_scene_id]
+        messages.extend(_lines_to_chat_messages(script.prologue, player_name))
+        if index < current_idx and script.epilogue:
+            messages.extend(_lines_to_chat_messages(script.epilogue, player_name))
+
+    return messages
 
 
 def _line_text(lines: tuple[FixedLine, ...], player_name: str | None) -> str:
