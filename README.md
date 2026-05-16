@@ -1,4 +1,4 @@
-# PreDev-Backend
+# Kernel-Girlfriend-Backend
 
 **커널을 좋아하는 옆자리의 그녀** — FastAPI + LangGraph 백엔드 (API_SPEC v1.3 구현체).
 
@@ -40,10 +40,11 @@ app/
 ├── database.py             # AsyncEngine + SessionLocal
 ├── deps.py                 # require_session (쿠키→세션)
 ├── api/v1/                 # 엔드포인트 레이어
-│   ├── sessions.py         # §2.1~§2.4
+│   ├── sessions.py         # §2.1~§2.5 (세션 CRUD + 삭제)
 │   ├── chat.py             # §3.2 SSE / §3.3 / §3.5
 │   ├── scenes.py           # §4.1
 │   ├── ending.py           # §5.1
+│   ├── dev.py              # 개발/데모용 API
 │   └── health.py           # §6.1
 ├── schemas/                # Pydantic ENUM·요청/응답 모델
 ├── models/orm.py           # SQLAlchemy ORM
@@ -71,16 +72,17 @@ pyproject.toml              # uv 관리
 
 | 메서드 | 경로 | 설명 |
 |---|---|---|
-| `GET`  | `/api/v1/sessions/me` | 세션 존재 여부 |
-| `POST` | `/api/v1/sessions` | 신규 세션 (force_reset 지원) |
-| `POST` | `/api/v1/sessions/me/start` | 이름 입력 → 인트로 진입 |
-| `GET`  | `/api/v1/sessions/me/resume` | 이어 하기 |
-| `POST` | `/api/v1/chat` | **SSE** — meta → delta → state → (event_trigger) → (scene_transition) → end |
-| `GET`  | `/api/v1/chat/suggestions` | 호감도 상승 방향 예시 답안 |
-| `GET`  | `/api/v1/chat/history` | 커서 페이지네이션 |
-| `GET`  | `/api/v1/scenes/current` | 현재 씬 메타 |
-| `GET`  | `/api/v1/game/ending` | 엔딩 콘텐츠 (LLM 1회 생성 후 캐시) |
-| `GET`  | `/api/v1/health` | 헬스 체크 |
+| `GET`    | `/api/v1/sessions/me`        | 세션 존재 여부 |
+| `POST`   | `/api/v1/sessions`           | 신규 세션 (force_reset 지원) |
+| `POST`   | `/api/v1/sessions/me/start`  | 이름 입력 → 인트로 진입 |
+| `GET`    | `/api/v1/sessions/me/resume` | 이어 하기 |
+| `DELETE` | `/api/v1/sessions/me`        | 세션 삭제 (게임 초기화) |
+| `POST`   | `/api/v1/chat`               | **SSE** — meta → delta → state → (event_trigger) → (scene_transition) → end |
+| `GET`    | `/api/v1/chat/suggestions`   | 호감도 상승 방향 예시 답안 |
+| `GET`    | `/api/v1/chat/history`       | 커서 페이지네이션 |
+| `GET`    | `/api/v1/scenes/current`     | 현재 씬 메타 |
+| `GET`    | `/api/v1/game/ending`        | 엔딩 콘텐츠 (LLM 1회 생성 후 캐시) |
+| `GET`    | `/api/v1/health`             | 헬스 체크 |
 
 응답은 모두 `{"ok": true, "data": ...}` / `{"ok": false, "error": {"code", "message"}}` 형식입니다.
 
@@ -105,6 +107,9 @@ curl -b cookies.txt http://localhost:8000/api/v1/scenes/current
 curl -N -b cookies.txt -X POST http://localhost:8000/api/v1/chat \
      -H 'Content-Type: application/json' -H 'Accept: text/event-stream' \
      -d '{"message":"커널 디버깅 어떻게 하세요?"}'
+
+# 6) 세션 삭제 (초기화)
+curl -b cookies.txt -X DELETE http://localhost:8000/api/v1/sessions/me
 ```
 
 ## 로컬 개발 (도커 없이)
@@ -126,4 +131,7 @@ uvicorn app.main:app --reload
 
 ## 변경 이력
 
+- v0.2 (2026-05-16)
+  - `DELETE /api/v1/sessions/me` 세션 삭제 API 추가
+  - 세라 응답 성능 개선
 - v0.1 (2026-05-07) — API_SPEC v1.3 기반 전면 재작성. 기존 `solar.py`/`gemini.py`/`client.py` 프로토타입 제거.
